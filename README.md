@@ -2,4 +2,4 @@
 
 # GardasarCode.Base
 
-...
+> **Being supplemented.**
