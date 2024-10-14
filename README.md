@@ -2,4 +2,21 @@
 
 # GardasarCode.Base
 
+
+## CBOR
+
+"Any" object can be serialized to and deserialized from CBOR format using the `CBOR` class.
+
+```csharp
+var obj = new  Dictionary<string, object>
+{
+    { "key1", 1 },
+    { "key2", "value2" },
+    { "key3", new List<int> { 1, 2, 3 } }
+};
+
+CborBytes cbor = CBOR.Serialize(obj);
+var obj2 = CBOR.Deserialize<Dictionary<string, object>>(cbor);
+```
+
 > **Being supplemented.**
