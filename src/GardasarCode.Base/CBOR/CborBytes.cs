@@ -2,15 +2,15 @@ namespace GardasarCode.Base.CBOR;
 
 public class CborBytes
 {
-    private byte[]? cborData = Array.Empty<byte>();
+    private byte[]? _cborData = Array.Empty<byte>();
 
     public static implicit operator byte[](CborBytes cborString)
     {
-        return cborString.cborData ?? [];
+        return cborString._cborData ?? [];
     }
 
     public static explicit operator CborBytes(byte[] cborData)
     {
-        return new CborBytes { cborData = cborData };
+        return new CborBytes { _cborData = cborData };
     }
 }

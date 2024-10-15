@@ -4,7 +4,7 @@ using Xunit.Abstractions;
 
 namespace GardasarCode.Base.Test;
 
-public class CborTests(ITestOutputHelper testOutputHelper)
+public class SerializeDeserializeCborTests(ITestOutputHelper testOutputHelper)
 {
     [Theory]
     [InlineData(null, null)]
@@ -43,6 +43,7 @@ public class CborTests(ITestOutputHelper testOutputHelper)
 
         // Act
         var cborBytes = CborSerializer.SerializeToCbor(exampleObject);
+        testOutputHelper.WriteLine(BitConverter.ToString(cborBytes));
         var deserializedObject = CborDeserializer.DeserializeFromCbor<ClassWithParams>(cborBytes);
 
         // Assert
@@ -102,6 +103,7 @@ public class CborTests(ITestOutputHelper testOutputHelper)
 
         // Act
         var cborBytes = CborSerializer.SerializeToCbor(obj);
+        testOutputHelper.WriteLine(BitConverter.ToString(cborBytes));
         var deserializedValue = CborDeserializer.DeserializeFromCbor<object>(cborBytes);
 
         // Assert

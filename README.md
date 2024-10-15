@@ -2,7 +2,6 @@
 
 # GardasarCode.Base
 
-
 ## CBOR
 
 "Any" object can be serialized to and deserialized from CBOR format using the `CBOR` class.
