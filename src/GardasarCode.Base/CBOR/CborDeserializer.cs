@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Formats.Cbor;
+using System.Reflection;
 
 namespace GardasarCode.Base.CBOR;
 
@@ -35,7 +36,14 @@ public static class CborDeserializer
             {
                 reader.ReadStartMap();
                 var selfDescribeCborType = reader.ReadTextString();
-                readObjectType = readObjectType ?? Type.GetType(selfDescribeCborType);
+
+                if (readObjectType is null)
+                {
+                    string[] assemblyType = selfDescribeCborType.Split('|');
+                    Assembly assembly = Assembly.Load(assemblyType[1]);
+                    readObjectType = assembly.GetType(assemblyType[0]);
+                }
+
                 isWrapped = true;
             }
         }

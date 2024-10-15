@@ -149,8 +149,7 @@ public static class Cbor
             not null when type == typeof(DateTimeOffset?) => (CborDateTimeOffsetNullable, EmptyByte),
             not null when type == typeof(DateTimeOffset[]) => (CborDateTimeOffsetArray, EmptyByte),
 
-
-            _ => (CborTag.SelfDescribeCbor, type.AssemblyQualifiedName)
+            _ => (CborTag.SelfDescribeCbor, $"{type.FullName}|{type.Assembly.GetName().Name}")
         };
     }
 
