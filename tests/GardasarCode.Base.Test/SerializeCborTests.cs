@@ -94,7 +94,7 @@ public class SerializeCborTests(ITestOutputHelper testOutputHelper)
 
         testOutputHelper.WriteLine(BitConverter.ToString(cborBytes));
 
-        var cborBytescborBytes = CborDeserializer.DeserializeFromCbor<object>(@cborBytes);
+        var cborBytescborBytes = CborDeserializer.DeserializeFromCbor<object>(cborBytes);
         // Assert
         Assert.NotNull(cborBytes);
         Assert.Equal(byteArray, cborBytes);
@@ -125,7 +125,7 @@ public class SerializeCborTests(ITestOutputHelper testOutputHelper)
         var value = 10;
         object @object = value;
 
-        var byteString = "D9-D9-F2-A1-62-46-36-0A";
+        var byteString = "D9-D9-F3-A1-62-46-36-0A";
         var byteArray = byteString.Split('-').Select(b => Convert.ToByte(b, 16)).ToArray();
 
         // Act
@@ -136,7 +136,6 @@ public class SerializeCborTests(ITestOutputHelper testOutputHelper)
         Assert.NotNull(cborBytes);
         Assert.Equal(byteArray, cborBytes);
     }
-
 
     [Fact]
     public void SerializeDeserializeCbor_ShouldInt32NullableAsSelf()
@@ -181,7 +180,7 @@ public class SerializeCborTests(ITestOutputHelper testOutputHelper)
         int? value = 10;
         object @object = value;
 
-        var byteString = "D9-D9-F2-A1-62-46-36-0A";
+        var byteString = "D9-D9-F3-A1-62-46-36-0A";
         var byteArray = byteString.Split('-').Select(b => Convert.ToByte(b, 16)).ToArray();
 
         // Act
@@ -192,7 +191,6 @@ public class SerializeCborTests(ITestOutputHelper testOutputHelper)
         Assert.NotNull(cborBytes);
         Assert.Equal(byteArray, cborBytes);
     }
-
 
     [Fact]
     public void SerializeDeserializeCbor_ShouldInt32NullableNullAsObject()
@@ -273,7 +271,7 @@ public class SerializeCborTests(ITestOutputHelper testOutputHelper)
         int[] value = [];
         object @object = value;
 
-        var byteString = "D9-D9-F0-A1-62-46-36-80";
+        var byteString = "D9-D9-F1-A1-62-46-36-80";
         var byteArray = byteString.Split('-').Select(b => Convert.ToByte(b, 16)).ToArray();
 
         // Act

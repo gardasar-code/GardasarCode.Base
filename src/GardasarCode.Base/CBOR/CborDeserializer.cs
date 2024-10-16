@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Formats.Cbor;
 using System.Reflection;
+using GardasarCode.Generator;
 
 namespace GardasarCode.Base.CBOR;
 
@@ -30,21 +31,26 @@ public static class CborDeserializer
 
         if (isTagged)
         {
-            readObjectType = Cbor.GetTypeFromCborTag(reader.ReadTag());
+            var pt = reader.PeekTag();
 
-            if (reader.PeekState() == CborReaderState.StartMap)
+            if (pt >= CborTagTypes.CborUltimo)
             {
-                reader.ReadStartMap();
-                var selfDescribeCborType = reader.ReadTextString();
+                readObjectType = CborTagTypes.UnTag(reader.ReadTag());
 
-                if (readObjectType is null)
+                if (reader.PeekState() == CborReaderState.StartMap)
                 {
-                    string[] assemblyType = selfDescribeCborType.Split('|');
-                    Assembly assembly = Assembly.Load(assemblyType[1]);
-                    readObjectType = assembly.GetType(assemblyType[0]);
-                }
+                    reader.ReadStartMap();
+                    var selfDescribeCborType = reader.ReadTextString();
 
-                isWrapped = true;
+                    if (readObjectType is null)
+                    {
+                        var assemblyType = selfDescribeCborType.Split('|');
+                        var assembly = Assembly.Load(assemblyType[1]);
+                        readObjectType = assembly.GetType(assemblyType[0]);
+                    }
+
+                    isWrapped = true;
+                }
             }
         }
 
@@ -63,11 +69,6 @@ public static class CborDeserializer
                     _ => null
                 };
             }
-            else if (cborState == CborReaderState.Tag && reader.ReadTag() == Cbor.CborNew)
-            {
-                reader.ReadNull();
-                result = readObjectType == typeof(string) ? string.Empty : readObjectType == typeof(byte[]) ? Array.Empty<byte>() : Activator.CreateInstance(readObjectType);
-            }
             else if (readObjectType == typeof(string))
             {
                 result = reader.ReadTextString();
@@ -78,43 +79,15 @@ public static class CborDeserializer
             }
             else if (cborState == CborReaderState.StartArray && readObjectType.IsArray)
             {
-                var elementType = readObjectType.GetElementType();
-                var length = reader.ReadStartArray() ?? 0;
-
-                var array = readObjectType == typeof(byte[]) ? new byte[length] : Array.CreateInstance(elementType, length);
-                for (var i = 0; i < length; i++) array.SetValue(DeserializeObject(reader, elementType), i);
-
-                reader.ReadEndArray();
-                result = array;
+                result = DeserializeArrayType(reader, readObjectType);
             }
             else if (cborState == CborReaderState.StartArray && readObjectType.IsGenericType && readObjectType.GetGenericTypeDefinition() == typeof(List<>))
             {
-                var elementType = readObjectType.GetGenericArguments()[0];
-                var length = reader.ReadStartArray() ?? 0;
-
-                var list = (IList)Activator.CreateInstance(readObjectType);
-                for (var i = 0; i < length; i++) list.Add(DeserializeObject(reader, elementType));
-
-                reader.ReadEndArray();
-                result = list;
+                result = DeserializeCollectionType(reader, readObjectType);
             }
             else if (cborState == CborReaderState.StartMap && readObjectType.IsGenericType && readObjectType.GetGenericTypeDefinition() == typeof(Dictionary<,>))
             {
-                var keyType = readObjectType.GetGenericArguments()[0];
-                var valueType = readObjectType.GetGenericArguments()[1];
-
-                var dict = (IDictionary)Activator.CreateInstance(readObjectType);
-                var length = reader.ReadStartMap() ?? 0;
-
-                for (var i = 0; i < length; i++)
-                {
-                    var key = DeserializeObject(reader, keyType);
-                    var value = DeserializeObject(reader, valueType);
-                    dict.Add(key, value);
-                }
-
-                reader.ReadEndMap();
-                result = dict;
+                result = DeserializeDictionaryType(reader, readObjectType);
             }
             else
             {
@@ -148,40 +121,51 @@ public static class CborDeserializer
         return result;
     }
 
+    private static object? DeserializeDictionaryType(CborReader reader, Type readObjectType)
+    {
+        var keyType = readObjectType.GetGenericArguments()[0];
+        var valueType = readObjectType.GetGenericArguments()[1];
+
+        var dict = (IDictionary)Activator.CreateInstance(readObjectType);
+        var length = reader.ReadStartMap() ?? 0;
+
+        for (var i = 0; i < length; i++)
+        {
+            var key = DeserializeObject(reader, keyType);
+            var value = DeserializeObject(reader, valueType);
+            dict.Add(key, value);
+        }
+
+        reader.ReadEndMap();
+        return dict;
+    }
+
+    private static object? DeserializeCollectionType(CborReader reader, Type readObjectType)
+    {
+        var elementType = readObjectType.GetGenericArguments()[0];
+        var length = reader.ReadStartArray() ?? 0;
+
+        var list = (IList)Activator.CreateInstance(readObjectType);
+        for (var i = 0; i < length; i++) list.Add(DeserializeObject(reader, elementType));
+
+        reader.ReadEndArray();
+        return list;
+    }
+
+    private static object DeserializeArrayType(CborReader reader, Type readObjectType)
+    {
+        var elementType = readObjectType.GetElementType();
+        var length = reader.ReadStartArray() ?? 0;
+
+        var array = readObjectType == typeof(byte[]) ? new byte[length] : Array.CreateInstance(elementType, length);
+        for (var i = 0; i < length; i++) array.SetValue(DeserializeObject(reader, elementType), i);
+
+        reader.ReadEndArray();
+        return array;
+    }
+
     private static object? DeserializeValueType(CborReader reader, Type readObjectType)
     {
-        if (readObjectType == typeof(short) || readObjectType == typeof(short))
-            return (short)reader.ReadInt32();
-        if (readObjectType == typeof(ushort) || readObjectType == typeof(ushort?))
-            return (ushort)reader.ReadUInt32();
-        if (readObjectType == typeof(int) || readObjectType == typeof(int?))
-            return reader.ReadInt32();
-        if (readObjectType == typeof(uint) || readObjectType == typeof(uint?))
-            return reader.ReadUInt32();
-        if (readObjectType == typeof(long) || readObjectType == typeof(long?))
-            return reader.ReadInt64();
-        if (readObjectType == typeof(ulong) || readObjectType == typeof(ulong?))
-            return reader.ReadUInt64();
-        if (readObjectType == typeof(decimal) || readObjectType == typeof(decimal?))
-            return reader.ReadDecimal();
-        if (readObjectType == typeof(double) || readObjectType == typeof(double?))
-            return reader.ReadDouble();
-        if (readObjectType == typeof(float) || readObjectType == typeof(float?))
-            return reader.ReadSingle();
-        if (readObjectType == typeof(byte) || readObjectType == typeof(byte?))
-            return (byte?)reader.ReadInt32();
-        if (readObjectType == typeof(bool) || readObjectType == typeof(bool?))
-            return reader.ReadBoolean();
-        if (readObjectType == typeof(TimeSpan) || readObjectType == typeof(TimeSpan?))
-            return TimeSpan.FromMicroseconds(reader.ReadDouble());
-        if (readObjectType == typeof(DateTime) || readObjectType == typeof(DateTime?))
-            return reader.ReadUnixTimeSeconds();
-        if (readObjectType == typeof(DateTimeOffset) || readObjectType == typeof(DateTimeOffset?))
-            return reader.ReadDateTimeOffset();
-        if (readObjectType == typeof(char) || readObjectType == typeof(char?))
-            return reader.ReadTextString().ToCharArray()[0];
-        if (readObjectType == typeof(Guid)) return new Guid(reader.ReadTextString());
-
-        return null;
+        return CborTagTypes.DeserializeType(reader, readObjectType);
     }
 }

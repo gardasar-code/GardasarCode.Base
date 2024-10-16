@@ -599,4 +599,68 @@ public class SerializeDeserializeCborTests(ITestOutputHelper testOutputHelper)
         // Assert
         Assert.Equal(value, deserializedValue);
     }
+
+    [Fact]
+    public void SerializeDeserializeCbor_ShouldIDecimal()
+    {
+        // Arrange
+        var example = decimal.MaxValue;
+
+        // Act
+        var cborBytes = CborSerializer.SerializeToCbor(example);
+        testOutputHelper.WriteLine(BitConverter.ToString(cborBytes));
+
+        var deserializedObject = CborDeserializer.DeserializeFromCbor<decimal>(cborBytes);
+
+        // Assert
+        Assert.Equal(example, deserializedObject);
+    }
+
+    [Fact]
+    public void SerializeDeserializeCbor_ShouldIFloat()
+    {
+        // Arrange
+        var example = float.MaxValue;
+
+        // Act
+        var cborBytes = CborSerializer.SerializeToCbor(example);
+        testOutputHelper.WriteLine(BitConverter.ToString(cborBytes));
+
+        var deserializedObject = CborDeserializer.DeserializeFromCbor<float>(cborBytes);
+
+        // Assert
+        Assert.Equal(example, deserializedObject);
+    }
+
+    [Fact]
+    public void SerializeDeserializeCbor_ShouldIDouble()
+    {
+        // Arrange
+        var example = double.MaxValue;
+
+        // Act
+        var cborBytes = CborSerializer.SerializeToCbor(example);
+        testOutputHelper.WriteLine(BitConverter.ToString(cborBytes));
+
+        var deserializedObject = CborDeserializer.DeserializeFromCbor<double>(cborBytes);
+
+        // Assert
+        Assert.Equal(example, deserializedObject);
+    }
+
+    [Fact]
+    public void SerializeDeserializeCbor_ShouldISingle()
+    {
+        // Arrange
+        var example = float.MaxValue;
+
+        // Act
+        var cborBytes = CborSerializer.SerializeToCbor(example);
+        testOutputHelper.WriteLine(BitConverter.ToString(cborBytes));
+
+        var deserializedObject = CborDeserializer.DeserializeFromCbor<float>(cborBytes);
+
+        // Assert
+        Assert.Equal(example, deserializedObject);
+    }
 }

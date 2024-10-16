@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Formats.Cbor;
 using System.Reflection;
-using GardasarCode.Base.Extensions;
+using GardasarCode.Generator;
 
 namespace GardasarCode.Base.CBOR;
 
@@ -30,7 +30,7 @@ public static class CborSerializer
 
         if (isWrapping)
         {
-            var (tag, name) = Cbor.Tagging(saveObjectType);
+            var (tag, name) = CborTagTypes.Tag(saveObjectType);
             writer.WriteTag(tag);
 
             writer.WriteStartMap(1); // map
@@ -43,7 +43,7 @@ public static class CborSerializer
         var isSerialized = false;
 
         // value
-        if (properties.Length == 0 && saveObjectType.IsValueType)
+        if (saveObjectType.IsValueType)
         {
             isSerialized = SerializeValueType(writer, obj);
         }
@@ -98,110 +98,7 @@ public static class CborSerializer
     {
         var saveObjectType = obj.GetType();
         if (saveObjectType is not { IsValueType: true }) return false;
-
-        if (saveObjectType == typeof(short) && obj is short _short)
-        {
-            writer.WriteInt32(_short);
-            return true;
-        }
-
-        if (saveObjectType == typeof(ushort) && obj is ushort _ushort)
-        {
-            writer.WriteUInt32(_ushort);
-            return true;
-        }
-
-        if (saveObjectType == typeof(int) && obj is int _int32)
-        {
-            writer.WriteInt32(_int32);
-            return true;
-        }
-
-        if (saveObjectType == typeof(long) && obj is long _int64)
-        {
-            writer.WriteInt64(_int64);
-            return true;
-        }
-
-        if (saveObjectType == typeof(uint) && obj is uint _uint32)
-        {
-            writer.WriteUInt32(_uint32);
-            return true;
-        }
-
-        if (saveObjectType == typeof(ulong) && obj is ulong _uint64)
-        {
-            writer.WriteUInt64(_uint64);
-            return true;
-        }
-
-        if (saveObjectType == typeof(float) && obj is float _single)
-        {
-            writer.WriteSingle(_single);
-            return true;
-        }
-
-        if (saveObjectType == typeof(double) && obj is double _double)
-        {
-            writer.WriteDouble(_double);
-            return true;
-        }
-
-        if (saveObjectType == typeof(decimal) && obj is decimal _decimal)
-        {
-            writer.WriteDecimal(_decimal);
-            return true;
-        }
-
-        if (saveObjectType == typeof(char) && obj is char _char)
-        {
-            writer.WriteTextString(_char.ToString());
-            return true;
-        }
-
-        if (saveObjectType == typeof(byte) && obj is byte _byte)
-        {
-            writer.WriteInt32(_byte);
-            return true;
-        }
-
-        if (saveObjectType == typeof(sbyte) && obj is sbyte _sbyte)
-        {
-            writer.WriteInt32(_sbyte);
-            return true;
-        }
-
-        if (saveObjectType == typeof(TimeSpan) && obj is TimeSpan _timeSpan)
-        {
-            writer.WriteDouble(_timeSpan.TotalMicroseconds);
-            return true;
-        }
-
-        if (saveObjectType == typeof(bool) && obj is bool _bool)
-        {
-            writer.WriteBoolean(_bool);
-            return true;
-        }
-
-        if (saveObjectType == typeof(Guid) && obj is Guid _guid)
-        {
-            writer.WriteTextString(_guid.ToString());
-            return true;
-        }
-
-        if (saveObjectType == typeof(DateTime) && obj is DateTime _dateTime)
-        {
-            writer.WriteUnixTimeSeconds(_dateTime.ToUnixTicks());
-            return true;
-        }
-
-        if (saveObjectType == typeof(DateTimeOffset) && obj is DateTimeOffset _dateTimeOffset)
-        {
-            writer.WriteDateTimeOffset(_dateTimeOffset);
-            return true;
-        }
-
-        return false;
+        return CborTagTypes.SerializeType(writer, obj, saveObjectType);
     }
 
     private static bool SerializeArrayType(CborWriter writer, object? obj)
