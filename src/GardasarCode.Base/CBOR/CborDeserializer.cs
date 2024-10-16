@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Formats.Cbor;
 using System.Reflection;
+using GardasarCode.Base.Extensions;
 using GardasarCode.Generator;
 
 namespace GardasarCode.Base.CBOR;
@@ -73,7 +74,7 @@ public static class CborDeserializer
             {
                 result = reader.ReadTextString();
             }
-            else if (readObjectType.IsValueType)
+            else if (readObjectType.IsPrimitiveOrNullablePrimitive())
             {
                 result = DeserializeValueType(reader, readObjectType);
             }
@@ -91,6 +92,11 @@ public static class CborDeserializer
             }
             else
             {
+
+                var properties = readObjectType.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(w => w.CanWrite).ToArray();
+                if(properties.Length == 0)
+                    throw new Exception($"The object of \"{readObjectType.Name}\" cannot be restored because there are no writable fields.");
+
                 result = Activator.CreateInstance(readObjectType);
                 var lengthOfProps = reader.ReadStartMap();
 
@@ -154,11 +160,11 @@ public static class CborDeserializer
 
     private static object DeserializeArrayType(CborReader reader, Type readObjectType)
     {
-        var elementType = readObjectType.GetElementType();
+        var arrayType = readObjectType.GetElementType();
         var length = reader.ReadStartArray() ?? 0;
 
-        var array = readObjectType == typeof(byte[]) ? new byte[length] : Array.CreateInstance(elementType, length);
-        for (var i = 0; i < length; i++) array.SetValue(DeserializeObject(reader, elementType), i);
+        var array = readObjectType == typeof(byte[]) ? new byte[length] : Array.CreateInstance(arrayType, length);
+        for (var i = 0; i < length; i++) array.SetValue(DeserializeObject(reader, arrayType), i);
 
         reader.ReadEndArray();
         return array;

@@ -245,7 +245,7 @@ public class CborTagTypesGenerator : IIncrementalGenerator
             else if (string.Equals(baseType, "DateTime", StringComparison.OrdinalIgnoreCase))
             {
                 sourceBuilder.AppendLine($"if (readObjectType == typeof({baseType}) || readObjectType == typeof({baseType}?))");
-                sourceBuilder.AppendLine("return reader.ReadUnixTimeSeconds();");
+                sourceBuilder.AppendLine("return reader.ReadUnixTimeSeconds().DateTime;");
             }
             else if (string.Equals(baseType, "Guid", StringComparison.OrdinalIgnoreCase))
             {

@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Formats.Cbor;
 using System.Reflection;
+using GardasarCode.Base.Extensions;
 using GardasarCode.Generator;
 
 namespace GardasarCode.Base.CBOR;
@@ -43,7 +44,7 @@ public static class CborSerializer
         var isSerialized = false;
 
         // value
-        if (saveObjectType.IsValueType)
+        if (saveObjectType.IsPrimitiveOrNullablePrimitive())
         {
             isSerialized = SerializeValueType(writer, obj);
         }
@@ -167,4 +168,7 @@ public static class CborSerializer
 
         return false;
     }
+
+
+
 }
